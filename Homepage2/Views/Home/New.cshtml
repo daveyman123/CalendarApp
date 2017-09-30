@@ -1,0 +1,17 @@
+﻿@model Homepage2.Links
+@{
+    ViewBag.Title = "New";
+}
+<h2>New Link</h2>
+@using (Html.BeginForm("Create", "home"))
+{
+    <div class="for-group">
+        <p>create a link and include "https://"</p>
+        @Html.TextBoxFor(m => m.Link, new { @class = "form-control" }) <br />
+    </div>
+    <div class="for-group">
+        <p>name of link</p>
+        @Html.TextBoxFor(m => m.Name, new { @class = "form-control" })
+    </div>
+    <button type="submit" class=" btn btn-primary"> Save  </button>
+}
