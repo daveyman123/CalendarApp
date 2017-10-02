@@ -28,9 +28,9 @@ namespace Homepage2.Controllers
             {
                 var userID = User.Identity.GetUserId();
                 var events = (from e in _context.Events
-                             where e.userID == userID
-                             select e).ToList();
-                
+                              where e.userID == userID
+                              select e).ToList();
+
                 return new JsonResult { Data = events, JsonRequestBehavior = JsonRequestBehavior.AllowGet };
             }
         }
@@ -129,7 +129,28 @@ namespace Homepage2.Controllers
             }
             return new JsonResult { Data = new { status = status } };
         }
-
+        [HttpPost]
+        public JsonResult ClearAll()
+        {
+            var status = false;
+            using (DefaultConnection dc = new DefaultConnection())
+            {
+                var userID = User.Identity.GetUserId();
+                var events = (from e in _context.Events
+                              where e.userID == userID
+                              select e).ToList();
+                foreach (Event i in events)
+                {
+                    dc.Events.Attach(i);
+                   
+                    dc.Events.Remove(i);
+                }
+                dc.SaveChanges();
+                status = true;
+            }
+        
+                return new JsonResult { Data = new { status = status } };
+        }
 
 
     }

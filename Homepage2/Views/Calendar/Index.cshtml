@@ -19,6 +19,9 @@
                 <button id="btnEdit" class="btn btn-default btn-sm pull-right" style="margin-right:5px;">
                     <span class="glyphicon glyphicon-pencil"></span> Edit
                 </button>
+                <button id="btnClear" class="btn btn-default btn-sm pull-right">
+                    <span class="glyphicon glyphicon-alert"></span> REMOVE ALL
+                </button>
                 <p id="pDetails"></p>
             </div>
             <div class="modal-footer">
@@ -145,6 +148,7 @@
                 $('#calender').fullCalendar('destroy');
                 $('#calender').fullCalendar({
                     contentHeight: 400,
+                    timezone: 'UTC',
                     defaultDate: new Date(),
                     timeFormat: 'h(:mm)a',
                     header: {
@@ -159,9 +163,9 @@
                         selectedEvent = calEvent;
                         $('#myModal #eventTitle').text(calEvent.title);
                         var $description = $('<div/>');
-                        $description.append($('<p/>').html('<b>Start:</b>' + calEvent.start.format("MMM-DD-YYYY")));
+                        $description.append($('<p/>').html('<b>Start:</b>' + calEvent.start.format("MMM-DD-YYYY HH:mm a")));
                         if (calEvent.end != null) {
-                            $description.append($('<p/>').html('<b>End:</b>' + calEvent.end.format("MMM-DD-YYYY")));
+                            $description.append($('<p/>').html('<b>End:</b>' + calEvent.end.format("MMM-DD-YYYY HH:mm a")));
                         }
                         $description.append($('<p/>').html('<b>Description:</b>' + calEvent.description));
                         $('#myModal #pDetails').empty().html($description);
@@ -189,8 +193,8 @@
                         var data = {
                             EventID: event.eventID,
                             Subject: event.title,
-                            Start: event.start.format('MM-DD-YYYY'),
-                            End: event.end != null ? event.end.format('MM-DD-YYYY') : null,
+                            Start: event.start.format('MM-DD-YYYY HH:mm a'),
+                            End: event.end != null ? event.end.format('MM-DD-YYYY HH:mm a') : null,
                             Description: event.description,
                             ThemeColor: event.color,
                             IsFullDay: event.allDay,
@@ -210,7 +214,26 @@
                     $.ajax({
                         type: "POST",
                         url: '/calendar/DeleteEvent',
-                        data: {'eventID': selectedEvent.eventID},
+                        data: { 'eventID': selectedEvent.eventID },
+                        success: function (data) {
+                            if (data.status) {
+                                //Refresh the calender
+                                FetchEventAndRenderCalendar();
+                                $('#myModal').modal('hide');
+                            }
+                        },
+                        error: function () {
+                            alert('Failed');
+                        }
+                    })
+                }
+            })
+            $('#btnClear').click(function () {
+                if (selectedEvent != null && confirm('Are you sure you want to delete ALL calendar events?')) {
+                    $.ajax({
+                        type: "POST",
+                        url: '/calendar/ClearAll',
+                        data: { 'eventID': selectedEvent.eventID },
                         success: function (data) {
                             if (data.status) {
                                 //Refresh the calender
@@ -226,7 +249,7 @@
             })
 
             $('#dtp1,#dtp2').datetimepicker({
-                format: 'MM-DD-YYYY'
+                format: 'MM-DD-YYYY HH:mm a'
             });
 
             $('#chkIsFullDay').change(function () {
@@ -242,10 +265,10 @@
                 if (selectedEvent != null) {
                     $('#hdEventID').val(selectedEvent.eventID);
                     $('#txtSubject').val(selectedEvent.title);
-                    $('#txtStart').val(selectedEvent.start.format('MM-DD-YYYY'));
+                    $('#txtStart').val(selectedEvent.start.format('MM-DD-YYYY HH:mm a'));
                     $('#chkIsFullDay').prop("checked", selectedEvent.allDay || false);
                     $('#chkIsFullDay').change();
-                    $('#txtEnd').val(selectedEvent.end != null ? selectedEvent.end.format('MM-DD-YYYY') : '');
+                    $('#txtEnd').val(selectedEvent.end != null ? selectedEvent.end.format('MM-DD-YYYY HH:mm a') : '');
                     $('#txtDescription').val(selectedEvent.description);
                     $('#ddThemeColor').val(selectedEvent.color);
                     $('#RecEvent').val(selectedEvent.freq);
@@ -271,8 +294,8 @@
                     return;
                 }
                 else {
-                    var startDate = moment($('#txtStart').val(), "MM-DD-YYYY").toDate();
-                    var endDate = moment($('#txtEnd').val(), "MM-DD-YYYY").toDate();
+                    var startDate = moment($('#txtStart').val(), "MM-DD-YYYY HH:mm a").toDate();
+                    var endDate = moment($('#txtEnd').val(), "MM-DD-YYYY HH:mm a").toDate();
                     if (startDate > endDate) {
                         alert('Invalid end date');
                         return;
