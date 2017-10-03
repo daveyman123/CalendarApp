@@ -39,72 +39,88 @@
                 <h4 class="modal-title">Save Event</h4>
             </div>
             <div class="modal-body">
-                <form class="col-md-12 form-horizontal">
-                    <input type="hidden" id="hdEventID" value="0" />
-                    <div class="form-group">
-                        <label>Subject</label>
-                        <input type="text" id="txtSubject" class="form-control" />
-                    </div>
-                    <div class="form-group">
-                        <label>Start</label>
-                        <div class="input-group date" id="dtp1">
-                            <input type="text" id="txtStart" class="form-control" />
-                            <span class="input-group-addon">
-                                <span class="glyphicon glyphicon-calendar"></span>
-                            </span>
+                
+
+                    <form class="col-md-12 form-horizontal">
+                        <input type="hidden" id="hdEventID" value="0" />
+                        <div class="form-group">
+                            <label>Subject</label>
+                            <input type="text" id="txtSubject" class="form-control" />
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="checkbox">
-                            <label><input type="checkbox" id="chkIsFullDay" checked="checked" />  Is Full Day event</label>
+                        <div class="form-group">
+                            <label>End</label>
+                            <div class="row">
+                                <div class='col-sm-7'>
+                                    
+                                        <div class='input-group date' id='dtp1'>
+                                            <input type='text' class="form-control" />
+                                            <span class="input-group-addon">
+                                                <span class="glyphicon glyphicon-calendar"></span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                            </div>
+                                <div class="form-group">
+                                    <div class="checkbox">
+                                        <label><input type="checkbox" id="chkIsFullDay" checked="checked" />  Is Full Day event</label>
+                                    </div>
+                                </div>
+                        <div class="form-group" id="divEndDate" style="display:none">
+
+                            <label>End</label>
+                            <div class="row">
+                                <div class='col-sm-7'>
+
+                                    <div class='input-group date' id='dtp1'>
+                                        <input type='text' class="form-control" />
+                                        <span class="input-group-addon">
+                                            <span class="glyphicon glyphicon-calendar"></span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
-                    </div>
-                    <div class="form-group" id="divEndDate" style="display:none">
-                        <label>End</label>
-                        <div class="input-group date" id="dtp2">
-                            <input type="text" id="txtEnd" class="form-control" />
-                            <span class="input-group-addon">
-                                <span class="glyphicon glyphicon-calendar"></span>
-                            </span>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Description</label>
-                        <textarea id="txtDescription" rows="3" class="form-control"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>Theme Color</label>
-                        <select id="ddThemeColor" class="form-control">
-                            <option value="">Default</option>
-                            <option value="red">Red</option>
-                            <option value="blue">Blue</option>
-                            <option value="black">Black</option>
-                            <option value="green">Green</option>
-                        </select>
-                    </div>
+                               
+                                <div class="form-group">
+                                    <label>Description</label>
+                                    <textarea id="txtDescription" rows="3" class="form-control"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label>Theme Color</label>
+                                    <select id="ddThemeColor" class="form-control">
+                                        <option value="">Default</option>
+                                        <option value="red">Red</option>
+                                        <option value="blue">Blue</option>
+                                        <option value="black">Black</option>
+                                        <option value="green">Green</option>
+                                    </select>
+                                </div>
 
 
-                    <div class="form-group">
-                        <label>Recurring</label>
-                        <select id="RecEvent" class="form-control">
-                            <option value="0">Non-Recurring</option>
-                            <option value="1">Weekly</option>
-                            <option value="2">Monthly</option>
-                            <option value="3">Yearly</option>
-                        </select>
-                    </div>
+                                <div class="form-group">
+                                    <label>Recurring</label>
+                                    <select id="RecEvent" class="form-control">
+                                        <option value="0">Non-Recurring</option>
+                                        <option value="1">Weekly</option>
+                                        <option value="2">Monthly</option>
+                                        <option value="3">Yearly</option>
+                                    </select>
+                                </div>
 
 
 
-                    <button type="button" id="btnSave" class="btn btn-success">Save</button>
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                </form>
-            </div>
+                                <button type="button" id="btnSave" class="btn btn-success">Save</button>
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    </form>
+                </div>
         </div>
     </div>
 </div>
 
-
+</div>
 <link href="//cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.4.0/fullcalendar.min.css" rel="stylesheet" />
 <link href="//cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.4.0/fullcalendar.print.css" rel="stylesheet" media="print" />
 <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker.min.css" rel="stylesheet" />
@@ -295,7 +311,7 @@
                 }
                 else {
                     var startDate = moment($('#txtStart').val(), "MM-DD-YYYY HH:mm a").toDate();
-                    var endDate = moment($('#txtEnd').val(), "MM-DD-YYYY HH:mm a").toDate();
+                    var endDate = moment($('#txtStart').val(), "MM-DD-YYYY HH:mm a").toDate();
                     if (startDate > endDate) {
                         alert('Invalid end date');
                         return;
