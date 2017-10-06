@@ -38,6 +38,7 @@ namespace Homepage2.Controllers
         [HttpPost]
         public JsonResult SaveEvent(Event e)
         {
+            var RecIdz = Guid.NewGuid().ToString();
             e.userID = User.Identity.GetUserId();
             var status = false;
             using (DefaultConnection dc = new DefaultConnection())
@@ -71,15 +72,16 @@ namespace Homepage2.Controllers
                             _e.Start = stDate;
                             _e.End = EnDate;
                         }
-
+                        e.RecId = RecIdz;
                         _e.Subject = e.Subject;
                         _e.Description = e.Description;
                         _e.IsFullDay = e.IsFullDay;
                         _e.ThemeColor = e.ThemeColor;
                         _e.Freq = e.Freq;
                         _e.userID = User.Identity.GetUserId();
+                        _e.RecId = RecIdz;
                         dc.Events.Add(_e);
-
+                        
                         i++;
                     } while (i < 25);
                 }
@@ -98,11 +100,11 @@ namespace Homepage2.Controllers
                         v.ThemeColor = e.ThemeColor;
                         v.Freq = e.Freq;
                         v.userID = e.userID;
+                        v.RecId = e.RecId;
                     }
                 }
                 else
                 {
-
                     dc.Events.Add(e);
                 }
 
@@ -130,14 +132,34 @@ namespace Homepage2.Controllers
             return new JsonResult { Data = new { status = status } };
         }
         [HttpPost]
-        public JsonResult ClearAll()
+        public JsonResult ClearAll(string RecId, DateTime Start, bool all)
         {
             var status = false;
+            if (all == true)
+            {
+
+
+                using (DefaultConnection dc = new DefaultConnection())
+                {
+                    var events = (from e in _context.Events
+                                  where e.RecId == RecId
+                                  select e).ToList();
+                    foreach (Event i in events)
+                    {
+                        dc.Events.Attach(i);
+
+                        dc.Events.Remove(i);
+                    }
+                    dc.SaveChanges();
+                    status = true;
+                }
+            }
+            
             using (DefaultConnection dc = new DefaultConnection())
             {
-                var userID = User.Identity.GetUserId();
+                //var userID = User.Identity.GetUserId();
                 var events = (from e in _context.Events
-                              where e.userID == userID
+                              where e.RecId == RecId && e.Start > Start
                               select e).ToList();
                 foreach (Event i in events)
                 {

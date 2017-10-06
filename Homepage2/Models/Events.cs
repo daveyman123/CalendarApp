@@ -16,6 +16,7 @@ namespace Homepage2
         public bool IsFullDay { get; set; }
         public string userID { get; set; }
         public int Freq { get; set; }
+        public string RecId { get; set; }
     }
 }
 

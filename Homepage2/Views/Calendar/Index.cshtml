@@ -19,9 +19,7 @@
                 <button id="btnEdit" class="btn btn-default btn-sm pull-right" style="margin-right:5px;">
                     <span class="glyphicon glyphicon-pencil"></span> Edit
                 </button>
-                <button id="btnClear" class="btn btn-default btn-sm pull-right">
-                    <span class="glyphicon glyphicon-alert"></span> REMOVE ALL
-                </button>
+                
                 <p id="pDetails"></p>
             </div>
             <div class="modal-footer">
@@ -30,6 +28,34 @@
         </div>
     </div>
 </div>
+
+<div id="myModalRemove" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title"><span id="eventTitle"></span></h4>
+            </div>
+            <div class="modal-body">
+                <div class="radio">
+                    <label><input type="radio" name="optradio" value= "removeOne">Remove single Event</label>
+                </div>
+                <div class="radio">
+                    <label><input type="radio" name="optradio" value="removeAfter">Remove all after this date</label>
+                </div>
+                <div class="radio disabled">
+                    <label><input type="radio" name="optradio" value="removeAll">Remove all</label>
+                </div>
+                <p id="pDetails"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="btnSaveRemove" class="btn btn-success">Save</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <div id="myModalSave" class="modal fade" role="dialog">
     <div class="modal-dialog">
@@ -120,7 +146,7 @@
     </div>
 </div>
 
-</div>
+
 <link href="//cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.4.0/fullcalendar.min.css" rel="stylesheet" />
 <link href="//cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.4.0/fullcalendar.print.css" rel="stylesheet" media="print" />
 <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker.min.css" rel="stylesheet" />
@@ -148,7 +174,8 @@
                                 end: v.End != null ? moment(v.End) : null,
                                 color: v.ThemeColor,
                                 allDay: v.IsFullDay,
-                                freq: v.Freq
+                                freq: v.Freq,
+                                RecId: v.RecId
                             });
                         })
 
@@ -164,7 +191,7 @@
                 $('#calender').fullCalendar('destroy');
                 $('#calender').fullCalendar({
                     contentHeight: 400,
-                    timezone: 'UTC',
+                    //timezone: 'UTC',
                     defaultDate: new Date(),
                     timeFormat: 'h(:mm)a',
                     header: {
@@ -183,13 +210,15 @@
                         if (calEvent.end != null) {
                             $description.append($('<p/>').html('<b>End:</b>' + calEvent.end.format("MMM-DD-YYYY HH:mm a")));
                         }
+                        if (calEvent.description != null) {
                         $description.append($('<p/>').html('<b>Description:</b>' + calEvent.description));
+                        }
                         $('#myModal #pDetails').empty().html($description);
 
                         $('#myModal').modal();
                     },
                     selectable: true,
-                    select: function (start, end) {
+                    select: function (start, end, RecId) {
                         selectedEvent = {
                             eventID: 0,
                             title: '',
@@ -199,6 +228,7 @@
                             allDay: false,
                             color: '',
                             freq: '0',
+                            RecId: RecId
 
                         };
                         openAddEditForm();
@@ -214,7 +244,8 @@
                             Description: event.description,
                             ThemeColor: event.color,
                             IsFullDay: event.allDay,
-                            Freq: event.freq
+                            Freq: event.freq,
+                            RecId: event.RecId
                         };
                         SaveEvent(data);
                     }
@@ -226,44 +257,81 @@
                 openAddEditForm();
             })
             $('#btnDelete').click(function () {
-                if (selectedEvent != null && confirm('Are you sure?')) {
-                    $.ajax({
-                        type: "POST",
-                        url: '/calendar/DeleteEvent',
-                        data: { 'eventID': selectedEvent.eventID },
-                        success: function (data) {
-                            if (data.status) {
-                                //Refresh the calender
-                                FetchEventAndRenderCalendar();
-                                $('#myModal').modal('hide');
-                            }
-                        },
-                        error: function () {
-                            alert('Failed');
-                        }
-                    })
-                }
-            })
-            $('#btnClear').click(function () {
-                if (selectedEvent != null && confirm('Are you sure you want to delete ALL calendar events?')) {
-                    $.ajax({
-                        type: "POST",
-                        url: '/calendar/ClearAll',
-                        data: { 'eventID': selectedEvent.eventID },
-                        success: function (data) {
-                            if (data.status) {
-                                //Refresh the calender
-                                FetchEventAndRenderCalendar();
-                                $('#myModal').modal('hide');
-                            }
-                        },
-                        error: function () {
-                            alert('Failed');
-                        }
-                    })
-                }
-            })
+                $('#myModal').modal('hide');
+                $('#myModalRemove').modal();
+                $('#btnSaveRemove').unbind().click(function ()  {
+                    var optradio = $('input[name="optradio"]:checked');
+                    if ((optradio.val() == 'removeOne') && selectedEvent != null && confirm('Are you sure')){
 
+                    
+                        $.ajax({
+                            type: "POST",
+                            url: '/calendar/DeleteEvent',
+                            data: { 'EventID': selectedEvent.eventID },
+                            success: function (data) {
+                                if (data.status) {
+                                    //Refresh the calender
+                                    FetchEventAndRenderCalendar();
+                                    $('#myModalRemove').modal('hide');
+                                }
+                            },
+                            error: function () {
+                                alert('Failed');
+                            }
+                        })
+                    }
+                    if ((optradio.val() == 'removeAfter') && selectedEvent != null && confirm('Are you sure')) {
+
+
+                        $.ajax({
+                            type: "POST",
+                            url: '/calendar/ClearAll',
+                            data: {
+                                'RecID': selectedEvent.RecId,
+                                'Start': selectedEvent.start.format('MM-DD-YYYY HH:mm a'),
+                                'all': false
+                            },
+                            success: function (data) {
+                                if (data.status) {
+                                    //Refresh the calender
+                                    FetchEventAndRenderCalendar();
+                                    $('#myModalRemove').modal('hide');
+                                }
+                            },
+                            error: function () {
+                                alert('Failed');
+                            }
+                        })
+                    }
+
+                    if ((optradio.val() == 'removeAll') && selectedEvent != null && confirm('Are you sure')) {
+
+
+                        $.ajax({
+                            type: "POST",
+                            url: '/calendar/ClearAll',
+                            data: {
+                                'RecID': selectedEvent.RecId,
+                                'Start': selectedEvent.start.format('MM-DD-YYYY HH:mm a'),
+                                'all': true
+                            },
+                            success: function (data) {
+                                if (data.status) {
+                                    //Refresh the calender
+                                    FetchEventAndRenderCalendar();
+                                    $('#myModalRemove').modal('hide');
+                                }
+                            },
+                            error: function () {
+                                alert('Failed');
+                            }
+                        })
+                    }
+
+                })
+                
+            })
+            
             $('#dtp1,#dtp2').datetimepicker({
                 format: 'MM-DD-YYYY HH:mm a'
             });
