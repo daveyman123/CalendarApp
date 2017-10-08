@@ -17,6 +17,8 @@ namespace Homepage2
         public string userID { get; set; }
         public int Freq { get; set; }
         public string RecId { get; set; }
+        public int? Reminder { get; set; }
+        public string JobID { get; set; }
     }
 }
 

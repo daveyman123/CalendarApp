@@ -1,14 +1,60 @@
-﻿using Microsoft.AspNet.Identity;
+﻿using Hangfire;
+using Microsoft.AspNet.Identity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
+using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Net.Mail;
+using System.Net.Mime;
+using System.Configuration;
+using SendGrid;
+using System.Net;
 
 namespace Homepage2.Controllers
 {
+    
     public class CalendarController : Controller
     {
+        public void SendMail(string email, Event e)
+        {
+            try
+            {
+                //Message properties, add your values below 
+                string fromProperty = "noreply@example.com";
+                //string recipientsProperty = "@'John Smith <" + email + ">'";
+  //              List<String> recipientsProperty = new List<String>
+//{
+  //  @"John Smith <djgraff1@cougars.ccis.edu>",
+    
+//};
+                string subjectProperty = "Calendar Reminder";
+                string HTMLContentProperty = "your event with subject: " + e.Subject + " is set to start at: " + e.Start.ToString();
+                //SendGrid credentials 
+                
+                //The email object 
+                var message = new SendGridMessage();
+                message.From = new MailAddress(fromProperty);
+                message.AddTo(email);
+                message.Subject = subjectProperty;
+                //Add the HTML and Text bodies 
+                message.Html = HTMLContentProperty;
+                var credentials = new NetworkCredential(
+                       ConfigurationManager.AppSettings["mailAccount"],
+                       ConfigurationManager.AppSettings["mailPassword"]
+                       );
+                var transportWeb = new Web(credentials);
+                transportWeb.DeliverAsync(message).Wait();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+
+        }
         // GET: Home
         [Authorize]
         public ActionResult Index()
@@ -38,11 +84,42 @@ namespace Homepage2.Controllers
         [HttpPost]
         public JsonResult SaveEvent(Event e)
         {
+           
             var RecIdz = Guid.NewGuid().ToString();
             e.userID = User.Identity.GetUserId();
             var status = false;
+            string jobID = "0";
             using (DefaultConnection dc = new DefaultConnection())
             {
+                if (e.EventID == 0 && e.Reminder > 0)
+                {
+                    
+                    var email = (from emailz in dc.Users
+                                 where emailz.Id == e.userID
+                                 select emailz.Email).FirstOrDefault();
+                    if (e.Reminder == 1)
+                    {
+                        jobID = BackgroundJob.Schedule(() => SendMail(email, e), e.Start);
+                    }
+                    if (e.Reminder == 2)
+                    {
+                        jobID = BackgroundJob.Schedule(() => SendMail(email, e), e.Start.AddMinutes(-15));
+                    }
+                    if (e.Reminder == 3)
+                    {
+                        jobID = BackgroundJob.Schedule(() => SendMail(email, e), e.Start.AddHours(-1));
+                    }
+                    if (e.Reminder == 4)
+                    {
+                        jobID = BackgroundJob.Schedule(() => SendMail(email, e), e.Start.AddDays(-7));
+                    }
+                    if (e.Reminder == 5)
+                    {
+                        jobID = BackgroundJob.Schedule(() => SendMail(email, e), e.Start.AddDays(-14));
+                    }
+                    e.JobID = jobID;
+
+                }
                 if (e.EventID == 0 && e.Freq > 0)
                 {
                     DateTime stDate = e.Start;
@@ -80,6 +157,7 @@ namespace Homepage2.Controllers
                         _e.Freq = e.Freq;
                         _e.userID = User.Identity.GetUserId();
                         _e.RecId = RecIdz;
+                        _e.JobID = jobID;
                         dc.Events.Add(_e);
                         
                         i++;
@@ -101,10 +179,15 @@ namespace Homepage2.Controllers
                         v.Freq = e.Freq;
                         v.userID = e.userID;
                         v.RecId = e.RecId;
+                        v.JobID = e.JobID;
                     }
                 }
                 else
                 {
+                    if (e.RecId == null)
+                    {
+                        e.RecId = RecIdz;
+                    }
                     dc.Events.Add(e);
                 }
 
@@ -123,7 +206,11 @@ namespace Homepage2.Controllers
             {
                 var v = dc.Events.Where(a => a.EventID == eventID).FirstOrDefault();
                 if (v != null)
-                {
+                {   if (v.JobID != null)
+                    {
+                        BackgroundJob.Delete(v.JobID);
+                    }
+                    //using (var connection = JobStorage.Current.GetConnection())
                     dc.Events.Remove(v);
                     dc.SaveChanges();
                     status = true;

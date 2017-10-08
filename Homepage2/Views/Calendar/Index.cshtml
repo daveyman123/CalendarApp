@@ -135,6 +135,17 @@
                                         <option value="3">Yearly</option>
                                     </select>
                                 </div>
+                        <div class="form-group">
+                            <label>Reminder</label>
+                            <select id="Reminder" class="form-control">
+                                <option value="0">None</option>
+                                <option value="1">0 min before</option>
+                                <option value="2">15 min</option>
+                                <option value="3">1 hour</option>
+                                <option value="4">1 week</option>
+                                <option value="5">2 weeks</option>
+                            </select>
+                        </div>
 
 
 
@@ -175,7 +186,8 @@
                                 color: v.ThemeColor,
                                 allDay: v.IsFullDay,
                                 freq: v.Freq,
-                                RecId: v.RecId
+                                RecId: v.RecId,
+                                Reminder: v.Reminder
                             });
                         })
 
@@ -228,7 +240,8 @@
                             allDay: false,
                             color: '',
                             freq: '0',
-                            RecId: RecId
+                            RecId: RecId,
+                            Reminder: '0'
 
                         };
                         openAddEditForm();
@@ -245,7 +258,8 @@
                             ThemeColor: event.color,
                             IsFullDay: event.allDay,
                             Freq: event.freq,
-                            RecId: event.RecId
+                            RecId: event.RecId,
+                            Reminder: event.Reminder
                         };
                         SaveEvent(data);
                     }
@@ -356,6 +370,7 @@
                     $('#txtDescription').val(selectedEvent.description);
                     $('#ddThemeColor').val(selectedEvent.color);
                     $('#RecEvent').val(selectedEvent.freq);
+                    $('#Reminder').val(selectedEvent.Reminder);
 
 
                 }
@@ -394,7 +409,8 @@
                     Description: $('#txtDescription').val(),
                     ThemeColor: $('#ddThemeColor').val(),
                     IsFullDay: $('#chkIsFullDay').is(':checked'),
-                    Freq: $('#RecEvent').val()
+                    Freq: $('#RecEvent').val(),
+                    Reminder: $('#Reminder').val()
 
 
 
