@@ -19,7 +19,9 @@
                 <button id="btnEdit" class="btn btn-default btn-sm pull-right" style="margin-right:5px;">
                     <span class="glyphicon glyphicon-pencil"></span> Edit
                 </button>
-                
+                <button id="btnShare" class="btn btn-default btn-sm pull-right" style="margin-right:5px;">
+                    <span class="glyphicon glyphicon-share-alt"></span> Share
+                </button>
                 <p id="pDetails"></p>
             </div>
             <div class="modal-footer">
@@ -28,6 +30,28 @@
         </div>
     </div>
 </div>
+
+<div id="myModalShare" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title"><span id="eventTitle"></span></h4>
+            </div>
+            <div class="modal-body">
+                
+                <div id="ShareId"></div>
+                <label for="ShareId" id="ShareLabelId"></label>
+                <p id="pDetails"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="btnSaveShare" class="btn btn-success">Save</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <div id="myModalRemove" class="modal fade" role="dialog">
     <div class="modal-dialog">
@@ -122,6 +146,7 @@
                                         <option value="blue">Blue</option>
                                         <option value="black">Black</option>
                                         <option value="green">Green</option>
+                                        <option value="orange">Orange</option>
                                     </select>
                                 </div>
 
@@ -146,6 +171,7 @@
                                 <option value="5">2 weeks</option>
                             </select>
                         </div>
+                        
 
 
 
@@ -171,7 +197,11 @@
             var selectedEvent = null;
             FetchEventAndRenderCalendar();
             function FetchEventAndRenderCalendar() {
-                events = [];
+                events = [
+                    
+
+                ];
+                
                 $.ajax({
                     type: "GET",
                     url: "/calendar/GetEvents",
@@ -187,7 +217,8 @@
                                 allDay: v.IsFullDay,
                                 freq: v.Freq,
                                 RecId: v.RecId,
-                                Reminder: v.Reminder
+                                Reminder: v.Reminder,
+                                UserID: v.UserID
                             });
                         })
 
@@ -230,7 +261,7 @@
                         $('#myModal').modal();
                     },
                     selectable: true,
-                    select: function (start, end, RecId) {
+                    select: function (start, end, RecId, UserID) {
                         selectedEvent = {
                             eventID: 0,
                             title: '',
@@ -241,7 +272,9 @@
                             color: '',
                             freq: '0',
                             RecId: RecId,
-                            Reminder: '0'
+                            Reminder: '0',
+                            UserID: UserID
+                            //Share: '0'
 
                         };
                         openAddEditForm();
@@ -260,16 +293,95 @@
                             Freq: event.freq,
                             RecId: event.RecId,
                             Reminder: event.Reminder
+                            
                         };
                         SaveEvent(data);
                     }
                 })
             }
 
+
             $('#btnEdit').click(function () {
                 //Open modal dialog for edit event
                 openAddEditForm();
             })
+
+            $('#btnShare').click(function () {
+                $('#myModal').modal('hide');
+                $('#myModalShare').modal();
+                $.ajax({
+                    type: "GET",
+                    datatype: "JSON",
+                    url: "/calendar/GetEmails",
+                    success: function (data) {
+                        var options = '';
+                        for (var i = 0; i < data.length; i++) {
+
+                            $('<input />', {
+                                class: 'checkbox',
+                                type: 'checkbox',
+                                id: 'id' + i,
+                                name: 'name' + data[i],
+                                value: data[i]
+                            })
+                                .appendTo("#ShareId");
+                            $("<label>").text(data[i]).appendTo('#ShareId')
+                        };
+
+
+
+                    }
+                })
+            })
+            $('#btnSaveShare').unbind().click(function () {
+                
+                var checkbox_value = "";
+                $(".checkbox").each(function () {
+                    var ischecked = $(this).is(":checked");
+                    if (ischecked) {
+                        checkbox_value += $(this).val() + "|";
+                    }
+                });
+                //var saveData = {};
+                //saveData = JSON.stringify(selectedEvent)
+             
+
+                var dataz = {
+                    //'emails': checkbox_value,
+                    EventID: selectedEvent.eventID,
+                    Subject: selectedEvent.title,
+                    Description: selectedEvent.description,
+                    Start: selectedEvent.start,
+                    End: selectedEvent.end,
+                    allDay: selectedEvent.allDay,
+                    Color: selectedEvent.color,
+                    Freq: selectedEvent.freq,
+                    RecId: selectedEvent.RecId,
+                    Reminder: selectedEvent.Reminder,
+                    UserID: selectedEvent.UserID
+                }
+                $.ajax({
+                    type: "POST",
+                    url: '/calendar/ShareEvent',
+                    data: {
+                        'emails': checkbox_value, 'UserID': selectedEvent.UserID, 'subject': selectedEvent.title,
+                        'start': selectedEvent.start.format('MM-DD-YYYY HH:mm a'),'RecID': selectedEvent.RecId, 'end': selectedEvent.end.format('MM-DD-YYYY HH:mm a')
+                        },
+                        //dataType: JSON,
+                        success: function (data) {
+                            if (data.status) {
+                                //Refresh the calender
+                                FetchEventAndRenderCalendar();
+                                $('#myModalShare').modal('hide');
+                            }
+                        },
+                        error: function () {
+                            alert('Failed');
+                        }
+                    })
+                })
+            
+
             $('#btnDelete').click(function () {
                 $('#myModal').modal('hide');
                 $('#myModalRemove').modal();
@@ -358,7 +470,7 @@
                     $('#divEndDate').show();
                 }
             });
-
+            
             function openAddEditForm() {
                 if (selectedEvent != null) {
                     $('#hdEventID').val(selectedEvent.eventID);
@@ -371,6 +483,7 @@
                     $('#ddThemeColor').val(selectedEvent.color);
                     $('#RecEvent').val(selectedEvent.freq);
                     $('#Reminder').val(selectedEvent.Reminder);
+                    //$('#Share').val(selectedEvent.Share)
 
 
                 }
@@ -400,6 +513,7 @@
                         return;
                     }
                 }
+                
 
                 var data = {
                     EventID: $('#hdEventID').val(),
@@ -410,8 +524,8 @@
                     ThemeColor: $('#ddThemeColor').val(),
                     IsFullDay: $('#chkIsFullDay').is(':checked'),
                     Freq: $('#RecEvent').val(),
-                    Reminder: $('#Reminder').val()
-
+                    Reminder: $('#Reminder').val(),
+                    //Share: $('#Share').val()
 
 
                 }

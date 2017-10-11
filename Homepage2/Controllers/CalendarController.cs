@@ -13,6 +13,7 @@ using System.Net.Mime;
 using System.Configuration;
 using SendGrid;
 using System.Net;
+using System.Text.RegularExpressions;
 
 namespace Homepage2.Controllers
 {
@@ -32,9 +33,10 @@ namespace Homepage2.Controllers
     
 //};
                 string subjectProperty = "Calendar Reminder";
-                string HTMLContentProperty = "your event with subject: " + e.Subject + " is set to start at: " + e.Start.ToString();
+                string HTMLContentProperty = e.Subject + " is set to start at: " + e.Start.ToString()
+                    + " go to http://homepage220170930121718.azurewebsites.net/Calendar to see the event";
                 //SendGrid credentials 
-                
+
                 //The email object 
                 var message = new SendGridMessage();
                 message.From = new MailAddress(fromProperty);
@@ -73,11 +75,28 @@ namespace Homepage2.Controllers
             using (DefaultConnection dc = new DefaultConnection())
             {
                 var userID = User.Identity.GetUserId();
+              
+                
                 var events = (from e in _context.Events
+                              
                               where e.userID == userID
                               select e).ToList();
+                
+
 
                 return new JsonResult { Data = events, JsonRequestBehavior = JsonRequestBehavior.AllowGet };
+            }
+        }
+
+        public JsonResult GetEmails()
+        {
+            using (DefaultConnection dc = new DefaultConnection())
+            {
+                var emails = (from emailz in dc.Users
+
+                              select emailz.Email).ToList();
+
+                return new JsonResult { Data = emails, JsonRequestBehavior = JsonRequestBehavior.AllowGet };
             }
         }
 
@@ -128,7 +147,7 @@ namespace Homepage2.Controllers
                     do
                     {
                         Event _e = new Event();
-                        if (e.Freq == 1)
+                        if (e.EventID == 0 && e.Freq == 1)
                         {
                             stDate = stDate.AddDays(7);
                             EnDate = EnDate.AddDays(7);
@@ -217,6 +236,51 @@ namespace Homepage2.Controllers
                 }
             }
             return new JsonResult { Data = new { status = status } };
+        }
+
+        [HttpPost]
+        public JsonResult ShareEvent(string emails, string UserID, string subject,
+                                        DateTime start, DateTime end, string RecID)
+        {
+            var emailz = emails.Split('|').ToList();
+            string emailzz = "";
+            var status = false;
+
+            using (DefaultConnection dc = new DefaultConnection())
+            {
+                
+                int i = 0;
+                do
+                {
+                    Event events = new Event();
+                    emailzz = Regex.Replace(emailz[i], "[|]", "");
+                    
+                    if (emailzz != "")
+                    {
+                        
+                        //events = slectedEvent;
+                        var foo = dc.Users.Where(h => h.Email == emailzz).FirstOrDefault();
+                        events.userID = foo.Id;
+                        events.End = end;
+                        events.Start = start;
+                        events.Subject = subject;
+                        events.RecId = RecID;
+                        //share.ShareEmail = foo.UserName;
+                        
+                        
+                        var jobId = BackgroundJob.Enqueue(() => SendMail(emailzz, events));
+                    }
+                    
+                    
+                    dc.Events.Add(events);
+                    i++;
+                } while (i < emailz.Count()-1);
+                
+                dc.SaveChanges();
+                status = true;
+            }
+            return new JsonResult { Data = new { status = status } };
+
         }
         [HttpPost]
         public JsonResult ClearAll(string RecId, DateTime Start, bool all)

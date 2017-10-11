@@ -15,6 +15,7 @@ namespace Homepage2
         }
         public virtual DbSet<Event> Events { get; set; }
         public virtual DbSet<Links> Links { get; set; }
+        public virtual DbSet<ShareWiths> ShareWiths { get; set; }
         
         
     }
