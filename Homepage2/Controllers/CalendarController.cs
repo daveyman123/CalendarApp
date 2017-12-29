@@ -242,6 +242,7 @@ namespace Homepage2.Controllers
         public JsonResult ShareEvent(string emails, string UserID, string subject,
                                         DateTime start, DateTime end, string RecID)
         {
+            //var emailb = emails.ToString();
             var emailz = emails.Split('|').ToList();
             string emailzz = "";
             var status = false;

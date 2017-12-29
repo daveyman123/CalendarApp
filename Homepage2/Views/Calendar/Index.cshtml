@@ -3,7 +3,7 @@
 }
 
 <h2>Calendar</h2>
-<div id="calender"></div>
+<div id="calender" bgcolor="#E6E6FA"></div>
 
 <div id="myModal" class="modal fade" role="dialog">
     <div class="modal-dialog">
@@ -41,9 +41,12 @@
             <div class="modal-body">
                 
                 <div id="ShareId"></div>
+                <label>Share With</label>
+                
                 <label for="ShareId" id="ShareLabelId"></label>
                 <p id="pDetails"></p>
             </div>
+            <!--<input type="text" id="shareInputID" class="form-control" />-->
             <div class="modal-footer">
                 <button type="button" id="btnSaveShare" class="btn btn-success">Save</button>
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
@@ -193,6 +196,7 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/js/bootstrap-datetimepicker.min.js"></script>
     <script>
         $(document).ready(function () {
+           
             var events = [];
             var selectedEvent = null;
             FetchEventAndRenderCalendar();
@@ -234,7 +238,7 @@
                 $('#calender').fullCalendar('destroy');
                 $('#calender').fullCalendar({
                     contentHeight: 400,
-                    timezone: 'UTC',
+                    //timezone: 'UTC',
                     defaultDate: new Date(),
                     timeFormat: 'h(:mm)a',
                     header: {
@@ -296,6 +300,7 @@
                             
                         };
                         SaveEvent(data);
+
                     }
                 })
             }
@@ -334,12 +339,17 @@
                 })
             })
             $('#btnSaveShare').unbind().click(function () {
-                
+
+                //var checkbox_value = "";
                 var checkbox_value = "";
+                
+                
                 $(".checkbox").each(function () {
                     var ischecked = $(this).is(":checked");
                     if (ischecked) {
                         checkbox_value += $(this).val() + "|";
+                        
+                        
                     }
                 });
                 //var saveData = {};
@@ -529,6 +539,8 @@
 
 
                 }
+                alert($('#txtStart').val().trim());
+                alert($('#Reminder').val());
                 SaveEvent(data);
                 // call function for submit data to the server
             })
@@ -537,6 +549,7 @@
                 $.ajax({
                     type: "POST",
                     url: '/calendar/SaveEvent',
+                    
                     data: data,
                     success: function (data) {
                         if (data.status) {
@@ -549,6 +562,7 @@
                         alert('Failed');
                     }
                 })
+                
             }
         })
     </script>
